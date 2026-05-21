@@ -21,7 +21,7 @@ export default function Navbar() {
       zIndex: 100,
     }}>
       <Link to="/" style={{ color: 'var(--text)', fontWeight: 700, fontSize: 17, letterSpacing: '-0.3px' }}>
-        ⬡ MicroFinance
+        ⬡ CredoLocal
       </Link>
       <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
         {user ? (

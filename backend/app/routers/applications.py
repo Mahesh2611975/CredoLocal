@@ -127,48 +127,111 @@ def submit_application(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+
     app = db.query(Application).filter(
         Application.id == req.application_id,
         Application.user_id == current_user.id
     ).first()
+
     if not app:
         raise HTTPException(404, "Application not found")
 
     report = app.ai_report
+
     if req.requested_loan_amount > report.safe_loan_amount:
-        raise HTTPException(400, f"Requested amount exceeds AI approved limit of ₹{report.safe_loan_amount:,.0f}")
 
-    app.lender_id               = req.lender_id
-    app.requested_loan_amount   = req.requested_loan_amount
-    app.selected_emi_months     = req.selected_emi_months
-    app.selected_emi_amount     = req.selected_emi_amount
-    app.selected_interest_rate  = req.selected_interest_rate
-    app.status                  = "submitted"
+        raise HTTPException(
+            400,
+            f"Requested amount exceeds AI approved limit of ₹{report.safe_loan_amount:,.0f}"
+        )
+
+    # ── Update Application ──────────────────────────────
+
+    app.lender_id = req.lender_id
+
+    app.requested_loan_amount = req.requested_loan_amount
+
+    app.selected_emi_months = req.selected_emi_months
+
+    app.selected_emi_amount = req.selected_emi_amount
+
+    app.selected_interest_rate = req.selected_interest_rate
+
+    app.status = "submitted"
+
     db.commit()
 
-    # Write to blockchain
+    # ── Prepare Blockchain Data ─────────────────────────
+
     chain_data = {
+
         "application_id": app.id,
-        "user_id":        current_user.id,
-        "lender_id":      req.lender_id,
-        "loan_amount":    req.requested_loan_amount,
-        "trust_score":    report.trust_score,
-        "risk_category":  report.risk_category,
+
+        "user_id": current_user.id,
+
+        "lender_id": req.lender_id,
+
+        "loan_amount": req.requested_loan_amount,
+
+        "trust_score": report.trust_score,
+
+        "risk_category": report.risk_category,
     }
-    result = write_application_to_chain(app.id, chain_data)
+
+    # ── Write AI Results to Blockchain ──────────────────
+
+    result = write_application_to_chain(
+
+        application_id=int(app.id),
+
+        data=chain_data,
+
+        trust_score=int(report.trust_score),
+
+        safe_loan_amount=int(report.safe_loan_amount),
+
+        anomaly_risk=int(report.anomaly_risk_pct),
+
+        risk_category=str(report.risk_category),
+    )
+
+    print("\n================ BLOCKCHAIN RESULT ====================")
+    print(result)
+    print("=======================================================\n")
+
+    # ── Save Blockchain Transaction ─────────────────────
+
     if result.get("tx_hash"):
+
         app.blockchain_tx_hash = result["tx_hash"]
-        db.add(BlockchainTransaction(
-            application_id=app.id,
-            tx_hash=result["tx_hash"],
-            action="submitted",
-            data_hash=result["data_hash"],
-            block_number=result.get("block_number"),
-        ))
+
+        db.add(
+            BlockchainTransaction(
+
+                application_id=app.id,
+
+                tx_hash=result["tx_hash"],
+
+                action="submitted",
+
+                data_hash=result["data_hash"],
+
+                block_number=result.get("block_number"),
+            )
+        )
+
     db.commit()
 
-    return {"message": "Application submitted successfully", "application_id": app.id,
-            "blockchain": result}
+    # ── Final Response ──────────────────────────────────
+
+    return {
+
+        "message": "Application submitted successfully",
+
+        "application_id": app.id,
+
+        "blockchain": result,
+    }
 
 
 # ── Get user's own applications ────────────────────────────────────────

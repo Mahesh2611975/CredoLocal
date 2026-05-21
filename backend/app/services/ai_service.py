@@ -303,8 +303,13 @@ def run_full_analysis(
     city_tier: int,
     business_type: str
 ) -> dict:
-    txn   = extract_transactions(csv_bytes)
-    cibil = extract_cibil(cibil_bytes, datetime.now())
+
+    txn = extract_transactions(csv_bytes)
+
+    cibil = extract_cibil(
+        cibil_bytes,
+        datetime.now()
+    )
 
     result = score_vendor(
         avg_monthly_credit          = txn["avg_monthly_credit"],
@@ -325,16 +330,43 @@ def run_full_analysis(
         business_type               = business_type,
     )
 
-    # Build loan tiers
+    # ── Build Loan EMI Options ───────────────────────────
+
     base = result["safe_loan_amount"]
+
     emi_options = []
+
     if base > 0:
-        for rate_mult, tenure, label in [(0.6, 12, "Conservative"), (1.0, 18, "Recommended"), (1.3, 24, "Maximum")]:
+
+        for rate_mult, tenure, label in [
+            (0.6, 12, "Conservative"),
+            (1.0, 18, "Recommended"),
+            (1.3, 24, "Maximum")
+        ]:
+
             amount = int(base * rate_mult)
-            rate   = {1: 14.0, 2: 16.0, 3: 18.0}.get(city_tier, 16.0)
-            r      = rate / 100 / 12
-            n      = tenure
-            emi    = round((amount * r * (1 + r) ** n) / ((1 + r) ** n - 1), 2)
+
+            rate = {
+                1: 14.0,
+                2: 16.0,
+                3: 18.0
+            }.get(city_tier, 16.0)
+
+            r = rate / 100 / 12
+
+            n = tenure
+
+            emi = round(
+                (
+                    amount
+                    * r
+                    * (1 + r) ** n
+                ) / (
+                    (1 + r) ** n - 1
+                ),
+                2
+            )
+
             emi_options.append({
                 "label":          label,
                 "loan_amount":    amount,
@@ -345,9 +377,16 @@ def run_full_analysis(
                 "total_interest": round(emi * tenure - amount, 2),
             })
 
+    # ── Store AI Results on Blockchain ───────────────────
+    # ── Final Response ───────────────────────────────────
+
     return {
-        "ai_result":   result,
-        "txn_data":    txn,
-        "cibil_data":  cibil,
+
+        "ai_result": result,
+
+        "txn_data": txn,
+
+        "cibil_data": cibil,
+
         "emi_options": emi_options,
     }

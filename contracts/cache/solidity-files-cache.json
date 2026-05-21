@@ -1,0 +1,40 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "/mnt/c/Users/Mahesh Yadav/Pictures/microfinance-platform/contracts/contracts/LoanApplicationContract.sol": {
+      "lastModificationDate": 1779351301643,
+      "contentHash": "2b5f406403023e323fb77bb240fdace8",
+      "sourceName": "contracts/LoanApplicationContract.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "LoanApplicationContract"
+      ]
+    }
+  }
+}
