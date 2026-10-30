@@ -94,19 +94,21 @@ async def analyze(
 
     # Match lenders
     matched_lenders = match_lenders(
-        db, business_type, city_tier,
-        analysis["cibil_data"]["cibil_score"],
-        r["default_probability"],
-        r["safe_loan_amount"],
-        r["safe_loan_amount"],
+        db=db,
+        business_type=business_type,
+        city_tier=city_tier,
+        cibil_score=analysis["cibil_data"]["cibil_score"],
+        default_probability=r["default_probability"],
+        loan_amount=r["safe_loan_amount"],
+        safe_loan_amount=r["safe_loan_amount"],
     )
 
     return {
         "application_id": app.id,
-        "ai_result":      r,
-        "txn_data":       analysis["txn_data"],
-        "cibil_data":     analysis["cibil_data"],
-        "emi_options":    analysis["emi_options"],
+        "ai_result": r,
+        "txn_data": analysis["txn_data"],
+        "cibil_data": analysis["cibil_data"],
+        "emi_options": analysis["emi_options"],
         "matched_lenders": matched_lenders,
     }
 
