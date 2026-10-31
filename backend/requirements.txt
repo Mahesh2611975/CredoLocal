@@ -16,9 +16,10 @@ boto3==1.34.100
 
 numpy
 pandas
-scikit-learn
+scikit-learn==1.6.1
+joblib==1.6.0
 lightgbm
-joblib
+
 
 beautifulsoup4==4.12.3
 python-dateutil==2.9.0
